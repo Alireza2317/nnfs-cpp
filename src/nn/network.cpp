@@ -289,20 +289,22 @@ void NeuralNetwork::train(
 	}
 }
 
-double NeuralNetwork::accuracy(const Matrix& features, const Eigen::VectorXd& labels) {
-	size_t total_samples = labels.size();
-	size_t correct_predictions = 0;
+double NeuralNetwork::accuracy(const Matrix& features, const Vector& labels) {
+	const size_t N_SAMPLES = features.cols();
+	Matrix predicted_outputs = predict_batch(features);
 
-	for (size_t i = 0; i < total_samples; i++) {
-		const auto& sample = features.col(i);
-		const auto& true_class = labels(i);
-		const auto& predicted_class = predict_class(sample);
-		if (predicted_class == true_class) {
+	size_t correct_predictions = 0;
+	for (size_t i = 0; i < N_SAMPLES; ++i) {
+		Vector predicted_output = predicted_outputs.col(i);
+		size_t predicted_class;
+		predicted_output.maxCoeff(&predicted_class);
+
+		if (predicted_class == static_cast<size_t>(labels(i))) {
 			correct_predictions++;
 		}
 	}
 
-	return static_cast<double>(correct_predictions) / total_samples;
+	return static_cast<double>(correct_predictions) / N_SAMPLES;
 }
 
 Vector NeuralNetwork::predict(const Vector& X) {
@@ -316,4 +318,18 @@ size_t NeuralNetwork::predict_class(const Vector& X) {
 	size_t max_index;
 	predicted_output.maxCoeff(&max_index);
 	return max_index;
+}
+
+Matrix NeuralNetwork::predict_batch(const Matrix& X) {
+	const size_t N_SAMPLES = X.cols();
+	const size_t OUTPUT_DIM = m_topology.back();
+
+	Matrix predictions(OUTPUT_DIM, N_SAMPLES);
+
+	for (size_t i = 0; i < N_SAMPLES; i++) {
+		feed_forward(X.col(i));
+		predictions.col(i) = m_layers.back();
+	}
+
+	return predictions;
 }

@@ -83,6 +83,11 @@ class NeuralNetwork {
 	/// @brief Predicts the class index for a given input layer.
 	size_t predict_class(const Vector& X);
 
+	/// @brief Predicts the output for a batch of input layers.
+	/// @param X Input data matrix of shape (input_dim, num_samples).
+	/// @return Output data matrix of shape (output_dim, num_samples).
+	Matrix predict_batch(const Matrix& X);
+
   private:
 	/// @brief Number of network layers (excluding input layer).
 	size_t m_N_LAYERS;
