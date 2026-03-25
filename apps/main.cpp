@@ -9,7 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 
-Eigen::MatrixXd load_csv(const char* path) {
+Matrix load_csv(const char* path) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
 		throw std::runtime_error("Could not open file: ");
@@ -40,7 +40,7 @@ Eigen::MatrixXd load_csv(const char* path) {
 	file.clear();
 	file.seekg(0);
 
-	Eigen::MatrixXd matrix(row_count, col_count);
+	Matrix matrix(row_count, col_count);
 	size_t row = 0;
 
 	while (std::getline(file, line)) {
@@ -66,10 +66,10 @@ Eigen::MatrixXd load_csv(const char* path) {
 	return matrix;
 }
 
-Eigen::MatrixXd one_hot_encode(const Eigen::MatrixXd& y, size_t num_classes) {
+Matrix one_hot_encode(const Matrix& y, size_t num_classes) {
 	const size_t n_samples = y.cols();
 
-	Eigen::MatrixXd y_one_hot = Eigen::MatrixXd::Zero(num_classes, n_samples);
+	Matrix y_one_hot = Matrix::Zero(num_classes, n_samples);
 
 	for (size_t i = 0; i < n_samples; i++) {
 		const size_t label = static_cast<size_t>(y(0, i));
@@ -84,17 +84,17 @@ Eigen::MatrixXd one_hot_encode(const Eigen::MatrixXd& y, size_t num_classes) {
 
 void mnist() {
 	std::println("Loading MNIST train dataset...");
-	Eigen::MatrixXd train_dataset = load_csv("../data/mnist_train_mini.csv");
+	Matrix train_dataset = load_csv("../data/mnist_train_mini.csv");
 	std::println("-> Loaded dataset with {} samples.", train_dataset.rows());
 
 	// The dataset is currently of shape (num_samples, 1 + num_features)
 	// Slice the dataset into features (X) and labels (y)
 	// The first col is the label, and the rest are the 28*28 features
 
-	Eigen::MatrixXd X_train = train_dataset.rightCols(train_dataset.cols() - 1).transpose();
+	Matrix X_train = train_dataset.rightCols(train_dataset.cols() - 1).transpose();
 	// X_train is of shape (num_features, num_samples)
 
-	Eigen::MatrixXd y_train = one_hot_encode(train_dataset.leftCols(1).transpose(), 10);
+	Matrix y_train = one_hot_encode(train_dataset.leftCols(1).transpose(), 10);
 	// y_train is of shape (num_outputs, num_samples), after one-hot encoding
 
 	std::println("-> Sliced and reshaped data:");
