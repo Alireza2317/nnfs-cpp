@@ -60,9 +60,7 @@ inline Vector d_tanh(const Vector& vec) {
 /// @brief Softmax activation function.
 
 inline Vector softmax(const Vector& vec) {
-	const auto f  = [] (auto z) {
-		return std::exp(z);
-	};
+	const auto f = [](auto z) { return std::exp(z); };
 
 	const Vector exp_vec = vec.unaryExpr(f);
 	return exp_vec / exp_vec.sum();
@@ -73,6 +71,28 @@ inline Vector softmax(const Vector& vec) {
 inline Vector d_softmax(const Vector& vec) {
 	const Vector sm = softmax(vec);
 	return sm.array() * (1.0 - sm.array());
+}
+
+inline ActivationPair get_activation_pair(const ActivationType& activation_type) {
+	switch (activation_type) {
+
+	case activation::ActivationType::Sigmoid:
+		return ActivationPair{.f = activation::sigmoid, .df = activation::d_sigmoid};
+
+	case activation::ActivationType::Relu:
+		return ActivationPair{.f = activation::relu, .df = activation::d_relu};
+
+	case activation::ActivationType::Tanh:
+		return ActivationPair{.f = activation::tanh, .df = activation::d_tanh};
+
+	case activation::ActivationType::Softmax:
+		return ActivationPair{.f = activation::softmax, .df = activation::d_softmax};
+
+	case activation::ActivationType::None:
+		return ActivationPair{
+			.f = [](const Vector& v) { return v; },
+			.df = [](const Vector& v) { return Vector::Ones(v.size()); }};
+	}
 }
 
 } // namespace activation

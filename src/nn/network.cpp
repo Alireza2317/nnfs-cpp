@@ -1,4 +1,5 @@
 #include "nn/network.hpp"
+#include "activation/activations.hpp"
 #include "nn/types.hpp"
 #include <print>
 #include <random>
@@ -85,26 +86,7 @@ void NeuralNetwork::setup_loss() {
 
 void NeuralNetwork::setup_activations() {
 	for (const activation::ActivationType& activation_type : m_activation_types) {
-		switch (activation_type) {
-
-		case activation::ActivationType::Sigmoid:
-			m_activation_f_df_pairs.push_back(
-				ActivationPair{.f = activation::sigmoid, .df = activation::d_sigmoid});
-			break;
-		case activation::ActivationType::Relu:
-			m_activation_f_df_pairs.push_back(
-				ActivationPair{.f = activation::relu, .df = activation::d_relu});
-			break;
-		case activation::ActivationType::Tanh:
-			m_activation_f_df_pairs.push_back(
-				ActivationPair{.f = activation::tanh, .df = activation::d_tanh});
-			break;
-		case activation::ActivationType::None:
-			m_activation_f_df_pairs.push_back(ActivationPair{
-				.f = [](const Vector& v) { return v; },
-				.df = [](const Vector& v) { return Vector::Ones(v.size()); }});
-			break;
-		}
+		m_activation_f_df_pairs.push_back(activation::get_activation_pair(activation_type));
 	}
 }
 
