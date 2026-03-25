@@ -77,6 +77,14 @@ class NeuralNetwork {
 	/// @return The fraction of correctly predicted classes.
 	double accuracy(const Matrix& features, const Eigen::VectorXd& labels);
 
+	/// @brief Calculates the confusion matrix for the network on the given dataset.
+	/// @param features Input data matrix of shape (input_dim, num_samples).
+	/// @param labels Vector containing the true class index for each sample.
+	/// @note This method is only suitable for classification problems.
+	///
+	/// @return An Eigen::MatrixXd representing the confusion matrix.
+	Matrix calculate_confusion_matrix(const Matrix& features, const Eigen::VectorXd& labels);
+
 	/// @brief Predicts the output for a given input layer.
 	Vector predict(const Vector& X);
 

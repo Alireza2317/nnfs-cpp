@@ -307,6 +307,28 @@ double NeuralNetwork::accuracy(const Matrix& features, const Vector& labels) {
 	return static_cast<double>(correct_predictions) / N_SAMPLES;
 }
 
+Matrix
+NeuralNetwork::calculate_confusion_matrix(const Matrix& features, const Eigen::VectorXd& labels) {
+
+	const size_t N_CLASSES = m_topology.back();
+	Matrix confusion_matrix = Matrix::Zero(N_CLASSES, N_CLASSES);
+
+	const size_t N_SAMPLES = features.cols();
+	Matrix predicted_outputs = predict_batch(features);
+
+	for (size_t i = 0; i < N_SAMPLES; ++i) {
+		Vector output = predicted_outputs.col(i);
+		size_t predicted_class;
+		output.maxCoeff(&predicted_class);
+
+		size_t true_class = static_cast<size_t>(labels(i));
+
+		confusion_matrix(true_class, predicted_class)++;
+	}
+
+	return confusion_matrix;
+}
+
 Vector NeuralNetwork::predict(const Vector& X) {
 	feed_forward(X);
 	return m_layers.back();

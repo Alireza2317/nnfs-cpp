@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <print>
 #include <span>
@@ -84,6 +85,33 @@ Matrix one_hot_encode(const Matrix& y, size_t num_classes) {
 	return y_one_hot;
 }
 
+void print_confusion_matrix(const Matrix& confusion_matrix, const std::span<std::string>& labels) {
+	size_t num_classes = labels.size();
+
+	// Print header for predicted classes
+	std::cout << std::setw(10) << " "; // Empty corner
+	for (size_t i = 0; i < num_classes; ++i) {
+		std::cout << std::setw(10) << "Pred " + labels[i];
+	}
+	std::cout << std::endl;
+
+	// Print separator
+	std::cout << std::string(10, ' ');
+	for (size_t i = 0; i < num_classes; ++i) {
+		std::cout << std::string(10, '-');
+	}
+	std::cout << std::endl;
+
+	// Print rows for actual classes
+	for (size_t i = 0; i < num_classes; ++i) {
+		std::cout << std::setw(10) << "Actual " + labels[i];
+		for (size_t j = 0; j < num_classes; ++j) {
+			std::cout << std::setw(10) << static_cast<int>(confusion_matrix(i, j));
+		}
+		std::cout << std::endl;
+	}
+}
+
 void mnist() {
 	std::println("Loading MNIST train dataset...");
 	Matrix train_dataset = load_csv("../data/mnist_train_mini.csv");
@@ -105,6 +133,7 @@ void mnist() {
 
 	// Normalize the data
 	X_train /= 255.0;
+
 	size_t topology[] = {784, 16, 16, 10};
 	activation::ActivationType acts[] = {
 		activation::ActivationType::Relu,
@@ -113,7 +142,30 @@ void mnist() {
 
 	NeuralNetwork nn = NeuralNetwork(topology, acts, loss::LossType::CrossEntropy, 42);
 
-	nn.train(X_train, y_train, 0.8, false, 0.1, 10, 128, true);
+	nn.train(X_train, y_train, 0.8, false, 0.1, 1, 128, true);
+
+	std::println("---- Training Finished ----");
+
+	std::println("\nLoading MNIST test dataset...");
+	Matrix test_dataset = load_csv("../data/mnist_test.csv");
+	std::println("-> Loaded dataset with {} samples.", test_dataset.rows());
+
+	Matrix X_test = test_dataset.rightCols(test_dataset.cols() - 1).transpose();
+	Eigen::VectorXd y_test_labels = test_dataset.leftCols(1).col(0);
+
+	X_test /= 255.0;
+
+	const double test_accuracy = nn.accuracy(X_test, y_test_labels) * 100.0;
+	std::println("\nTest Accuracy: {:.2f}%", test_accuracy);
+
+	std::array<std::string, 10> labels;
+	for (size_t i = 0; i < 10; ++i) {
+		labels.at(i) = std::to_string(i);
+	}
+
+	std::println("\nConfusion Matrix:");
+	Matrix confusion_matrix = nn.calculate_confusion_matrix(X_test, y_test_labels);
+	print_confusion_matrix(confusion_matrix, labels);
 }
 
 int main() {
