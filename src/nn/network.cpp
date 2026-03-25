@@ -30,6 +30,12 @@ NeuralNetwork::NeuralNetwork(
 	setup_activations();
 
 	setup_loss();
+
+	if (m_loss_type == loss::LossType::CrossEntropy &&
+		m_activation_types.back() != activation::ActivationType::Softmax) {
+		throw std::logic_error(
+			"For Cross-Entropy loss, the output layer's activation must be Softmax.");
+	}
 }
 
 NeuralNetwork::NeuralNetwork(
