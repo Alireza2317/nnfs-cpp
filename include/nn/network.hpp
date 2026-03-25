@@ -435,25 +435,14 @@ inline void NeuralNetwork::train(
 
 			update_weights_biases(gradients, current_lr);
 
-			if (verbose and batch_i % 50 == 0) {
-				const double train_cost = cost_MSE(batch_x, batch_y);
-
-				// Preparing the y matrix as a vector of labels, to call accuracy
-				Eigen::VectorXd labels(y_train.cols());
-				for (size_t i = 0; i < y_train.cols(); i++) {
-					size_t max_index;
-					y_train.col(i).maxCoeff(&max_index);
-					labels(i) = static_cast<double>(max_index);
-				}
-				const double acc = accuracy(X_train, labels);
+			if (verbose and batch_i == num_batches - 1) {
+				const double train_cost = cost_MSE(X_train, y_train);
 
 				std::println(
-					"epoch: {:03}, batch: {:05}/{:05} ~ training_cost={:.4f} ~ acc={:.2f}%",
+					"epoch: {:03}/{:03} ~ training_cost={:.4f}",
 					epoch + 1,
-					batch_i + 1,
-					num_batches,
-					train_cost,
-					acc * 100);
+					n_epochs,
+					train_cost);
 			}
 		}
 	}
