@@ -6,19 +6,22 @@
 /// @brief Shape type for weights and biases (rows, cols).
 using Shape = std::array<size_t, 2>;
 
-/// @brief Type representing a layer's activations or pre-activations.
-using Layer = Eigen::VectorXd;
+/// @brief Type representing a vector, used for activations or pre-activations of a layer.
+using Vector = Eigen::VectorXd;
+
+/// @brief Type representing a matrix, used for weights and biases and gradients.
+using Matrix = Eigen::MatrixXd;
 
 /// @brief A pair of activation function and its derivative.
 struct ActivationPair {
-	std::function<Layer(const Layer&)> f;
-	std::function<Layer(const Layer&)> df;
+	std::function<Vector(const Vector&)> f;
+	std::function<Vector(const Vector&)> df;
 };
 
 /// @brief Structure to hold gradients for ALL weights and biases.
 struct Gradients {
-	std::vector<Eigen::MatrixXd> dWs;
-	std::vector<Eigen::MatrixXd> dBs;
+	std::vector<Matrix> dWs;
+	std::vector<Matrix> dBs;
 
 	/// @brief Default constructor.
 	Gradients() = default;
@@ -34,16 +37,16 @@ struct Gradients {
 		dBs.reserve(N_LAYERS);
 
 		for (const Shape& shape : weights_shapes) {
-			dWs.emplace_back(Eigen::MatrixXd::Zero(shape.at(0), shape.at(1)));
+			dWs.emplace_back(Matrix::Zero(shape.at(0), shape.at(1)));
 		}
 
 		for (const Shape& shape : biases_shapes) {
-			dBs.emplace_back(Eigen::MatrixXd::Zero(shape.at(0), shape.at(1)));
+			dBs.emplace_back(Matrix::Zero(shape.at(0), shape.at(1)));
 		}
 	}
 
 	explicit Gradients(
-		std::vector<Eigen::MatrixXd>&& dWs, std::vector<Eigen::MatrixXd>&& dBs) noexcept {
+		std::vector<Matrix>&& dWs, std::vector<Matrix>&& dBs) noexcept {
 		this->dWs = std::move(dWs);
 		this->dBs = std::move(dBs);
 	}
