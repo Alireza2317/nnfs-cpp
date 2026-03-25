@@ -93,6 +93,8 @@ inline ActivationPair get_activation_pair(const ActivationType& activation_type)
 			.f = [](const Vector& v) { return v; },
 			.df = [](const Vector& v) { return Vector::Ones(v.size()); }};
 	}
+	// Should be unreachable
+	return ActivationPair{};
 }
 
 } // namespace activation
