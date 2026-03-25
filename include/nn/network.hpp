@@ -112,7 +112,7 @@ class NeuralNetwork {
 	std::vector<Matrix> m_weights;
 
 	/// @brief Biases vectors for each layer.
-	std::vector<Matrix> m_biases;
+	std::vector<Vector> m_biases;
 
 	/// @brief Topology of the network (layer sizes).
 	std::vector<size_t> m_topology;

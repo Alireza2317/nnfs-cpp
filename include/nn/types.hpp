@@ -21,7 +21,7 @@ struct ActivationPair {
 /// @brief Structure to hold gradients for ALL weights and biases.
 struct Gradients {
 	std::vector<Matrix> dWs;
-	std::vector<Matrix> dBs;
+	std::vector<Vector> dBs;
 
 	/// @brief Default constructor.
 	Gradients() = default;
@@ -41,12 +41,11 @@ struct Gradients {
 		}
 
 		for (const Shape& shape : biases_shapes) {
-			dBs.emplace_back(Matrix::Zero(shape.at(0), shape.at(1)));
+			dBs.emplace_back(Vector::Zero(shape.at(0)));
 		}
 	}
 
-	explicit Gradients(
-		std::vector<Matrix>&& dWs, std::vector<Matrix>&& dBs) noexcept {
+	explicit Gradients(std::vector<Matrix>&& dWs, std::vector<Vector>&& dBs) noexcept {
 		this->dWs = std::move(dWs);
 		this->dBs = std::move(dBs);
 	}

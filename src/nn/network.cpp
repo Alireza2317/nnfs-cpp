@@ -67,7 +67,7 @@ void NeuralNetwork::init_rnd_weights_biases() {
 	}
 
 	for (const Shape& shape : m_biases_shapes) {
-		m_biases.push_back(Matrix::Random(shape.at(0), shape.at(1)) * 0.01);
+		m_biases.push_back(Vector::Random(shape.at(0)) * 0.01);
 	}
 }
 
@@ -112,8 +112,8 @@ void NeuralNetwork::update_weights_biases(const Gradients& gradients, const doub
 		weights_matrix -= lr * dW;
 	}
 
-	for (auto&& [biases_matrix, dB] : std::ranges::views::zip(m_biases, gradients.dBs)) {
-		biases_matrix -= lr * dB;
+	for (auto&& [biases_vector, dB] : std::ranges::views::zip(m_biases, gradients.dBs)) {
+		biases_vector -= lr * dB;
 	}
 }
 
@@ -151,14 +151,14 @@ void NeuralNetwork::backpropagate_one(
 	feed_forward(input_layer);
 
 	// Derivative of the cost w.r.t. the output layer
-	const Matrix d_cost_p_ol = m_loss_f_df_pair.df(m_layers.back(), output_layer);
+	const Vector d_cost_p_ol = m_loss_f_df_pair.df(m_layers.back(), output_layer);
 
 	// Error of the output layer
-	const Matrix error_ol =
+	const Vector error_ol =
 		m_activation_f_df_pairs.back().df(m_z_layers.back()).array() * d_cost_p_ol.array();
 
 	// Errors of all hidden layers and the output layer, in order.
-	std::vector<Matrix> errors(m_N_LAYERS);
+	std::vector<Vector> errors(m_N_LAYERS);
 	errors.at(errors.size() - 1) = error_ol;
 
 	for (int i = m_N_LAYERS - 2; i >= 0; i--) {
@@ -169,7 +169,7 @@ void NeuralNetwork::backpropagate_one(
 	// Based on the equations of backprpoagation we know that
 	// The derivative of cost w.r.t. bias of each layer
 	// Is actually equal to the error of that layer.
-	const std::vector<Matrix>& d_cost_p_biases = errors;
+	const std::vector<Vector>& d_cost_p_biases = errors;
 
 	// Adding it to the gradients dBs
 	for (size_t i = 0; i < m_N_LAYERS; i++) {
