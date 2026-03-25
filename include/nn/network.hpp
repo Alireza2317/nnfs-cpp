@@ -2,11 +2,7 @@
 #include "activation/activations.hpp"
 #include "nn/types.hpp"
 #include <Eigen/Dense>
-#include <Eigen/src/Core/Matrix.h>
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-#include <numeric>
+#include <cstdlib>
 #include <print>
 #include <random>
 #include <ranges>
@@ -22,16 +18,23 @@ class NeuralNetwork {
 	/// @param topology List of layer sizes (input, hidden..., output).
 	/// @param activations List of activation types for each layer (excluding input layer).
 	explicit NeuralNetwork(
-		std::span<const size_t> topology, std::span<const activation::ActivationType> activations);
+		std::span<const size_t> topology,
+		std::span<const activation::ActivationType> activations,
+		size_t seed = 0);
 
 	/// @brief Constructs a neural network with a global activation type for all layers.
 	/// @param topology List of layer sizes (input, hidden..., output).
 	/// @param global_activation Activation type for all layers (excluding input layer).
 	explicit NeuralNetwork(
-		std::span<const size_t> topology, const activation::ActivationType& global_activation);
+		std::span<const size_t> topology,
+		const activation::ActivationType& global_activation,
+		size_t seed = 0);
 
 	/// @brief Setting the seed for the random generations.
-	void set_seed(const size_t seed = 0);
+	void set_seed(const size_t seed = 0) const;
+
+	/// @brief Setting the seed  random generations.
+	void set_seed();
 
 	/// @brief Performs a forward pass through the network using the current input layer.
 	void feed_forward();
@@ -84,7 +87,7 @@ class NeuralNetwork {
 	size_t m_N_LAYERS;
 
 	/// @brief The random seed used throughout random generations.
-	size_t m_seed = 0;
+	mutable size_t m_seed = 0;
 
 	/// @brief Activation types for each layer (excluding input layer).
 	std::vector<activation::ActivationType> m_activation_types;
@@ -154,16 +157,18 @@ class NeuralNetwork {
 // --- IMPLEMENTATION ---
 
 inline NeuralNetwork::NeuralNetwork(
-	std::span<const size_t> topology, std::span<const activation::ActivationType> activations)
+	std::span<const size_t> topology,
+	std::span<const activation::ActivationType> activations,
+	size_t seed)
 	: m_topology(topology.begin(), topology.end()),
-	  m_activation_types(activations.begin(), activations.end()) {
+	  m_activation_types(activations.begin(), activations.end()), m_N_LAYERS(topology.size() - 1) {
 
 	if (topology.size() < 3) {
 		throw std::invalid_argument(
 			"Neural network must have at least 3 layers (input, at least one hidden, and output).");
 	}
 
-	m_N_LAYERS = topology.size() - 1;
+	set_seed(seed);
 
 	calculate_weights_biases_shapes();
 
@@ -175,13 +180,16 @@ inline NeuralNetwork::NeuralNetwork(
 }
 
 inline NeuralNetwork::NeuralNetwork(
-	std::span<const size_t> topology, const activation::ActivationType& global_activation)
+	std::span<const size_t> topology,
+	const activation::ActivationType& global_activation,
+	size_t seed)
 	: NeuralNetwork::NeuralNetwork(
 		  topology,
-		  std::vector<activation::ActivationType>(topology.size() - 1, global_activation)) {
+		  std::vector<activation::ActivationType>(topology.size() - 1, global_activation),
+		  seed) {
 }
 
-inline void NeuralNetwork::set_seed(const size_t seed) {
+inline void NeuralNetwork::set_seed(const size_t seed) const {
 	if (seed == 0) {
 		m_seed = std::random_device{}();
 	} else {
@@ -197,6 +205,8 @@ inline void NeuralNetwork::calculate_weights_biases_shapes() {
 }
 
 inline void NeuralNetwork::init_rnd_weights_biases() {
+	std::srand(m_seed);
+
 	for (const Shape& shape : m_weights_shapes) {
 		m_weights.push_back(Eigen::MatrixXd::Random(shape.at(0), shape.at(1)) * 0.05);
 	}
@@ -425,7 +435,7 @@ inline void NeuralNetwork::train(
 
 			update_weights_biases(gradients, current_lr);
 
-			if (verbose and batch_i % 50 == 0 and epoch % 5 == 0) {
+			if (verbose and batch_i % 50 == 0) {
 				const double train_cost = cost_MSE(batch_x, batch_y);
 
 				// Preparing the y matrix as a vector of labels, to call accuracy

@@ -2,21 +2,17 @@
 #include "nn/network.hpp"
 #include "nn/types.hpp"
 #include <Eigen/Dense>
-#include <Eigen/src/Core/Matrix.h>
-#include <Eigen/src/Core/util/Constants.h>
-#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <print>
+#include <span>
 #include <sstream>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
-Eigen::MatrixXd load_csv(const std::string& path) {
+Eigen::MatrixXd load_csv(const char* path) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
-		throw std::runtime_error("Could not open file: " + path);
+		throw std::runtime_error("Could not open file: ");
 	}
 
 	std::string line;
@@ -33,7 +29,7 @@ Eigen::MatrixXd load_csv(const std::string& path) {
 			col_count++;
 		}
 	} else {
-		throw std::runtime_error("File " + path + " was probably empty!");
+		throw std::runtime_error("File was probably empty!");
 	}
 
 	while (std::getline(file, line)) {
@@ -88,7 +84,7 @@ Eigen::MatrixXd one_hot_encode(const Eigen::MatrixXd& y, size_t num_classes) {
 
 void mnist() {
 	std::println("Loading MNIST train dataset...");
-	Eigen::MatrixXd train_dataset = load_csv("../data/mnist_train.csv");
+	Eigen::MatrixXd train_dataset = load_csv("../data/mnist_train_mini.csv");
 	std::println("-> Loaded dataset with {} samples.", train_dataset.rows());
 
 	// The dataset is currently of shape (num_samples, 1 + num_features)
@@ -108,60 +104,15 @@ void mnist() {
 	// Normalize the data
 	X_train /= 255.0;
 
-	std::vector<size_t> topology = {784, 16, 16, 10};
-	std::vector<activation::ActivationType> acts = {
+	size_t topology[] = {784, 16, 16, 10};
+	activation::ActivationType acts[] = {
 		activation::ActivationType::Relu,
 		activation::ActivationType::Relu,
 		activation::ActivationType::Sigmoid};
 
-	NeuralNetwork nn = NeuralNetwork(topology, acts);
+	NeuralNetwork nn = NeuralNetwork(topology, acts, 42);
 
-	nn.train(X_train, y_train, 0.5, false, 0.1, 100, 128, true);
-}
-
-void xor_dataset() {
-	// 1. Create the XOR dataset
-	// Input features (4 samples, 2 features each)
-	Eigen::MatrixXd X_train(2, 4);
-	X_train << 0, 0, 1, 1, // Feature 1
-		0, 1, 0, 1;		   // Feature 2
-
-	// Target labels (4 samples, 1 output each)
-	Eigen::MatrixXd y_train(1, 4);
-	y_train << 0, 1, 1, 0;
-
-	std::println("XOR Dataset:");
-	std::cout << "X_train (inputs):\n" << X_train.transpose() << "\n";
-	std::cout << "y_train (labels):\n" << y_train.transpose() << "\n";
-	std::println("------------------------------------");
-
-	// 2. Define the Network Architecture
-	std::vector<size_t> topology = {2, 3, 1}; // 2 inputs -> 3 hidden neurons -> 1 output
-	std::vector<activation::ActivationType> activations = {
-		activation::ActivationType::Tanh,	// Hidden layer
-		activation::ActivationType::Sigmoid // Output layer
-	};
-
-	// 3. Create and Train the Neural Network
-	NeuralNetwork nn(topology, activations);
-	nn.set_seed(42); // Use a fixed seed for reproducible results
-
-	std::println("Training network...");
-	nn.train(X_train, y_train, 0.1, true, 0.0, 100, 4, true);
-	std::println("------------------------------------");
-
-	// 4. Test the Trained Network
-	std::println("Testing results:");
-	for (int i = 0; i < X_train.cols(); ++i) {
-		Layer input_sample = X_train.col(i);
-		Layer predicted_output = nn.predict(input_sample);
-		std::println(
-			"Input: [{}, {}] -> Predicted: {:.4f} (True Label: {})",
-			input_sample(0),
-			input_sample(1),
-			predicted_output(0),
-			y_train(0, i));
-	}
+	nn.train(X_train, y_train, 0.8, false, 0.1, 5, 128, true);
 }
 
 int main() {
