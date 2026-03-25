@@ -105,16 +105,15 @@ void mnist() {
 
 	// Normalize the data
 	X_train /= 255.0;
-
 	size_t topology[] = {784, 16, 16, 10};
 	activation::ActivationType acts[] = {
 		activation::ActivationType::Relu,
 		activation::ActivationType::Relu,
-		activation::ActivationType::Sigmoid};
+		activation::ActivationType::Softmax};
 
-	NeuralNetwork nn = NeuralNetwork(topology, acts, loss::LossType::MSE, 42);
+	NeuralNetwork nn = NeuralNetwork(topology, acts, loss::LossType::CrossEntropy, 42);
 
-	nn.train(X_train, y_train, 0.8, false, 0.1, 5, 128, true);
+	nn.train(X_train, y_train, 0.8, false, 0.1, 10, 128, true);
 }
 
 int main() {
