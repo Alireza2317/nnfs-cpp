@@ -1,5 +1,6 @@
 #pragma once
 #include "activation/activations.hpp"
+#include "nn/loss.hpp"
 #include "nn/types.hpp"
 #include <Eigen/Dense>
 #include <span>
@@ -13,17 +14,21 @@ class NeuralNetwork {
 	/// @brief Constructs a neural network with per-layer activation types.
 	/// @param topology List of layer sizes (input, hidden..., output).
 	/// @param activations List of activation types for each layer (excluding input layer).
+	/// @param loss The loss function to be used.
 	explicit NeuralNetwork(
 		std::span<const size_t> topology,
 		std::span<const activation::ActivationType> activations,
+		loss::LossType loss,
 		size_t seed = 0);
 
 	/// @brief Constructs a neural network with a global activation type for all layers.
 	/// @param topology List of layer sizes (input, hidden..., output).
 	/// @param global_activation Activation type for all layers (excluding input layer).
+	/// @param loss The loss function to be used.
 	explicit NeuralNetwork(
 		std::span<const size_t> topology,
 		const activation::ActivationType& global_activation,
+		loss::LossType loss,
 		size_t seed = 0);
 
 	/// @brief Setting the seed for the random generations.
@@ -38,11 +43,11 @@ class NeuralNetwork {
 	/// @brief Performs a forward pass through the network using the given input layer.
 	void feed_forward(const Vector& input_layer);
 
-	/// @brief Calculates the Mean Squared Error cost of a single sample.
-	double cost_MSE_single_sample(const Vector& sample, const Vector& output);
+	/// @brief Calculates the cost of a single sample.
+	double cost_single_sample(const Vector& sample, const Vector& output);
 
-	/// @brief Calculates MSE cost of the given data.
-	double cost_MSE(const Matrix& X, const Matrix& y);
+	/// @brief Calculates cost of the given data.
+	double cost(const Matrix& X, const Matrix& y);
 
 	/// @brief Trains the neural network using the provided training data.
 	/// @param X_train Input data matrix of shape (input_dim, num_samples).
@@ -85,6 +90,12 @@ class NeuralNetwork {
 	/// @brief The random seed used throughout random generations.
 	mutable size_t m_seed = 0;
 
+	/// @brief The loss function used for training.
+	loss::LossType m_loss_type;
+
+	/// @brief Pair of loss function and its derivative.
+	loss::LossPair m_loss_f_df_pair;
+
 	/// @brief Activation types for each layer (excluding input layer).
 	std::vector<activation::ActivationType> m_activation_types;
 
@@ -123,6 +134,9 @@ class NeuralNetwork {
 
 	/// @brief Sets up activation functions for each layer.
 	void setup_activations();
+
+	/// @brief Sets up the loss function.
+	void setup_loss();
 
 	/// @brief Calculates the shape of all weights and biases.
 	///

@@ -11,6 +11,7 @@ enum class ActivationType {
 	Sigmoid,
 	Relu,
 	Tanh,
+	Softmax,
 	None,
 };
 
@@ -54,6 +55,24 @@ inline Vector d_tanh(const Vector& vec) {
 		return 1 - tanh_z * tanh_z;
 	};
 	return vec.unaryExpr(f);
+}
+
+/// @brief Softmax activation function.
+
+inline Vector softmax(const Vector& vec) {
+	const auto f  = [] (auto z) {
+		return std::exp(z);
+	};
+
+	const Vector exp_vec = vec.unaryExpr(f);
+	return exp_vec / exp_vec.sum();
+}
+
+/// @brief The derivative of Softmax activation function.
+
+inline Vector d_softmax(const Vector& vec) {
+	const Vector sm = softmax(vec);
+	return sm.array() * (1.0 - sm.array());
 }
 
 } // namespace activation

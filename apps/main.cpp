@@ -1,7 +1,9 @@
 #include "activation/activations.hpp"
+#include "nn/loss.hpp"
 #include "nn/network.hpp"
 #include "nn/types.hpp"
 #include <Eigen/Dense>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <print>
@@ -110,12 +112,13 @@ void mnist() {
 		activation::ActivationType::Relu,
 		activation::ActivationType::Sigmoid};
 
-	NeuralNetwork nn = NeuralNetwork(topology, acts, 42);
+	NeuralNetwork nn = NeuralNetwork(topology, acts, loss::LossType::MSE, 42);
 
 	nn.train(X_train, y_train, 0.8, false, 0.1, 5, 128, true);
 }
 
 int main() {
 	mnist();
+
 	return 0;
 }

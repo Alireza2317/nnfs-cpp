@@ -7,9 +7,11 @@
 NeuralNetwork::NeuralNetwork(
 	std::span<const size_t> topology,
 	std::span<const activation::ActivationType> activations,
+	loss::LossType loss,
 	size_t seed)
 	: m_topology(topology.begin(), topology.end()),
-	  m_activation_types(activations.begin(), activations.end()), m_N_LAYERS(topology.size() - 1) {
+	  m_activation_types(activations.begin(), activations.end()), m_N_LAYERS(topology.size() - 1),
+	  m_loss_type(loss) {
 
 	if (topology.size() < 3) {
 		throw std::invalid_argument(
@@ -25,15 +27,19 @@ NeuralNetwork::NeuralNetwork(
 	init_all_neurons();
 
 	setup_activations();
+
+	setup_loss();
 }
 
 NeuralNetwork::NeuralNetwork(
 	std::span<const size_t> topology,
 	const activation::ActivationType& global_activation,
+	loss::LossType loss,
 	size_t seed)
 	: NeuralNetwork::NeuralNetwork(
 		  topology,
 		  std::vector<activation::ActivationType>(topology.size() - 1, global_activation),
+		  loss,
 		  seed) {
 }
 
@@ -71,6 +77,10 @@ void NeuralNetwork::init_all_neurons() {
 		m_z_layers.push_back(Eigen::VectorXd::Zero(layer_size));
 		m_layers.push_back(Eigen::VectorXd::Zero(layer_size));
 	}
+}
+
+void NeuralNetwork::setup_loss() {
+	m_loss_f_df_pair = loss::get_loss_pair(m_loss_type);
 }
 
 void NeuralNetwork::setup_activations() {
@@ -125,31 +135,29 @@ void NeuralNetwork::update_weights_biases(const Gradients& gradients, const doub
 	}
 }
 
-double NeuralNetwork::cost_MSE_single_sample(const Vector& sample, const Vector& output) {
+double NeuralNetwork::cost_single_sample(const Vector& sample, const Vector& output) {
 
 	feed_forward(sample);
 
 	const Vector& last_layer = m_layers.back();
 
-	const Vector diff = last_layer.array() - output.array();
-
-	return diff.array().square().mean();
+	return m_loss_f_df_pair.f(last_layer, output);
 }
 
-double NeuralNetwork::cost_MSE(const Matrix& X, const Matrix& y) {
-	double mse = 0.0;
+double NeuralNetwork::cost(const Matrix& X, const Matrix& y) {
+	double total_cost = 0.0;
 
 	for (size_t i = 0; i < X.cols(); i++) {
 		const auto& sample = X.col(i);
 		const auto& true_output = y.col(i);
 
-		mse += cost_MSE_single_sample(sample, true_output);
+		total_cost += cost_single_sample(sample, true_output);
 	}
 
 	// Divide by the number of samples
-	mse /= X.cols();
+	total_cost /= X.cols();
 
-	return mse;
+	return total_cost;
 }
 
 void NeuralNetwork::backpropagate_one(
@@ -160,8 +168,8 @@ void NeuralNetwork::backpropagate_one(
 
 	feed_forward(input_layer);
 
-	// Derivative of the Mean Squared cost w.r.t. the output layer
-	const Matrix d_cost_p_ol = 2 * (m_layers.back().array() - output_layer.array());
+	// Derivative of the cost w.r.t. the output layer
+	const Matrix d_cost_p_ol = m_loss_f_df_pair.df(m_layers.back(), output_layer);
 
 	// Error of the output layer
 	const Matrix error_ol =
@@ -284,7 +292,7 @@ void NeuralNetwork::train(
 			update_weights_biases(gradients, current_lr);
 
 			if (verbose and batch_i == num_batches - 1) {
-				const double train_cost = cost_MSE(X_train, y_train);
+				const double train_cost = cost(X_train, y_train);
 
 				std::println(
 					"epoch: {:03}/{:03} ~ training_cost={:.4f}", epoch + 1, n_epochs, train_cost);
