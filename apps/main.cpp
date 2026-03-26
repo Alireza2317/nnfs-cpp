@@ -55,6 +55,7 @@ Matrix load_csv(const char* path) {
 				matrix(row, col) = std::stod(cell);
 			} catch (const std::invalid_argument& e) {
 				std::println("Invalid value in cell!");
+				throw;
 			}
 			col++;
 		}
@@ -90,20 +91,20 @@ void print_confusion_matrix(const Matrix& confusion_matrix, const std::span<std:
 
 	// Print header for predicted classes
 	std::cout << std::setw(10) << " "; // Empty corner
-	for (size_t i = 0; i < num_classes; ++i) {
+	for (size_t i = 0; i < num_classes; i++) {
 		std::cout << std::setw(10) << "Pred " + labels[i];
 	}
 	std::cout << std::endl;
 
 	// Print separator
 	std::cout << std::string(10, ' ');
-	for (size_t i = 0; i < num_classes; ++i) {
+	for (size_t i = 0; i < num_classes; i++) {
 		std::cout << std::string(10, '-');
 	}
 	std::cout << std::endl;
 
 	// Print rows for actual classes
-	for (size_t i = 0; i < num_classes; ++i) {
+	for (size_t i = 0; i < num_classes; i++) {
 		std::cout << std::setw(10) << "Actual " + labels[i];
 		for (size_t j = 0; j < num_classes; ++j) {
 			std::cout << std::setw(10) << static_cast<int>(confusion_matrix(i, j));
@@ -159,7 +160,7 @@ void mnist() {
 	std::println("\nTest Accuracy: {:.2f}%", test_accuracy);
 
 	std::array<std::string, 10> labels;
-	for (size_t i = 0; i < 10; ++i) {
+	for (size_t i = 0; i < 10; i++) {
 		labels.at(i) = std::to_string(i);
 	}
 
@@ -168,8 +169,36 @@ void mnist() {
 	print_confusion_matrix(confusion_matrix, labels);
 }
 
-int main() {
-	mnist();
+void xor_dataset() {
+	Matrix X(2, 4);
+	X << 0, 0, 1, 1, 0, 1, 0, 1;
 
+	Matrix y(1, 4);
+	y << 0, 1, 1, 0;
+
+	size_t topology[] = {2, 4, 1};
+	activation::ActivationType acts[] = {
+		activation::ActivationType::Relu,
+		activation::ActivationType::Sigmoid,
+	};
+
+	NeuralNetwork nn = NeuralNetwork(topology, acts, loss::LossType::MSE, 42);
+
+	nn.train(X, y, 0.7, false, 0.001, 1000, 4);
+
+	const std::filesystem::path ROOT_PATH = PROJECT_ROOT_PATH;
+	const std::filesystem::path filepath = ROOT_PATH / "models" / "xor_model.bin";
+	nn.save(filepath);
+
+	std::println("Predictions:");
+	for (size_t i = 0; i < X.cols(); i++) {
+		Vector output = nn.predict(X.col(i));
+		std::println("Input: ({}, {}) -> Output: {:.4f}", X(0, i), X(1, i), output(0));
+	}
+}
+
+int main() {
+	// mnist();
+	xor_dataset();
 	return 0;
 }
