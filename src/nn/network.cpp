@@ -73,11 +73,11 @@ void NeuralNetwork::init_rnd_weights_biases() {
 	std::srand(m_seed);
 
 	for (const Shape& shape : m_weights_shapes) {
-		m_weights.push_back(Matrix::Random(shape.at(0), shape.at(1)) * 0.05);
+		m_weights.push_back(Matrix::Random(shape.at(0), shape.at(1)) * 0.5);
 	}
 
 	for (const Shape& shape : m_biases_shapes) {
-		m_biases.push_back(Vector::Random(shape.at(0)) * 0.01);
+		m_biases.push_back(Vector::Random(shape.at(0)) * 0.3);
 	}
 }
 
@@ -105,10 +105,12 @@ void NeuralNetwork::feed_forward() {
 }
 
 void NeuralNetwork::feed_forward(const Vector& input_layer) {
+	m_input_layer = input_layer;
+
 	for (size_t i = 0; i < m_N_LAYERS; i++) {
 		// Connection of input layer and the first hidden layer
 		if (i == 0) {
-			m_z_layers.at(i) = (m_weights.at(0) * input_layer) + m_biases.at(0);
+			m_z_layers.at(i) = (m_weights.at(0) * m_input_layer) + m_biases.at(0);
 		} else {
 			m_z_layers.at(i) = (m_weights.at(i) * m_layers.at(i - 1)) + m_biases.at(i);
 		}
@@ -298,7 +300,7 @@ double NeuralNetwork::accuracy(const Matrix& features, const Vector& labels) {
 	Matrix predicted_outputs = predict_batch(features);
 
 	size_t correct_predictions = 0;
-	for (size_t i = 0; i < N_SAMPLES; ++i) {
+	for (size_t i = 0; i < N_SAMPLES; i++) {
 		Vector predicted_output = predicted_outputs.col(i);
 		size_t predicted_class;
 		predicted_output.maxCoeff(&predicted_class);
@@ -320,7 +322,7 @@ NeuralNetwork::calculate_confusion_matrix(const Matrix& features, const Eigen::V
 	const size_t N_SAMPLES = features.cols();
 	Matrix predicted_outputs = predict_batch(features);
 
-	for (size_t i = 0; i < N_SAMPLES; ++i) {
+	for (size_t i = 0; i < N_SAMPLES; i++) {
 		Vector output = predicted_outputs.col(i);
 		size_t predicted_class;
 		output.maxCoeff(&predicted_class);

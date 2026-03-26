@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Eigen3 REQUIRED)
 
+# Define a macro with the path to the project root
+add_definitions(-DPROJECT_ROOT_PATH="${CMAKE_SOURCE_DIR}")
+
 # activation library (header-only)
 add_library(act_lib INTERFACE)
 target_include_directories(act_lib INTERFACE include)
