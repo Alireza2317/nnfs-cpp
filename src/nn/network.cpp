@@ -81,11 +81,11 @@ void NeuralNetwork::init_rnd_weights_biases() {
 	std::srand(m_seed);
 
 	for (const Shape& shape : m_weights_shapes) {
-		m_weights.push_back(Matrix::Random(shape.at(0), shape.at(1)) * 0.5);
+		m_weights.push_back(Matrix::Random(shape.at(0), shape.at(1)) * 0.3);
 	}
 
 	for (const Shape& shape : m_biases_shapes) {
-		m_biases.push_back(Vector::Random(shape.at(0)) * 0.3);
+		m_biases.push_back(Vector::Random(shape.at(0)) * 0.1);
 	}
 }
 

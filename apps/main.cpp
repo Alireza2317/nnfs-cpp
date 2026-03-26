@@ -142,8 +142,7 @@ void mnist() {
 		activation::ActivationType::Softmax};
 
 	NeuralNetwork nn = NeuralNetwork(topology, acts, loss::LossType::CrossEntropy, 42);
-
-	nn.train(X_train, y_train, 0.8, false, 0.1, 1, 128, true);
+	nn.train(X_train, y_train, 0.6, false, 0.15, 15, 128, true);
 
 	std::println("---- Training Finished ----");
 
@@ -158,6 +157,10 @@ void mnist() {
 
 	const double test_accuracy = nn.accuracy(X_test, y_test_labels) * 100.0;
 	std::println("\nTest Accuracy: {:.2f}%", test_accuracy);
+
+	const std::filesystem::path ROOT_PATH = PROJECT_ROOT_PATH;
+	const std::filesystem::path filepath = ROOT_PATH / "models" / "mnist_model.bin";
+	nn.save(filepath);
 
 	std::array<std::string, 10> labels;
 	for (size_t i = 0; i < 10; i++) {
