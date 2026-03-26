@@ -401,7 +401,7 @@ inline void NeuralNetwork::save(const std::string& filename) const {
 		const size_t size = bias.size();
 
 		file.write(reinterpret_cast<const char*>(&size), sizeof(size_t));
-		file.write(reinterpret_cast<const char*>(&size), sizeof(size_t));
+		file.write(reinterpret_cast<const char*>(&bias.data()), size * sizeof(double));
 	}
 	file.close();
 	std::println("Neural network saved to `{}`.", filename);
