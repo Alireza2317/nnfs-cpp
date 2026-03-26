@@ -2,6 +2,7 @@
 #include "activation/activations.hpp"
 #include "nn/loss.hpp"
 #include "nn/types.hpp"
+#include <filesystem>
 #include <fstream>
 #include <numeric>
 #include <print>
@@ -359,10 +360,13 @@ Matrix NeuralNetwork::predict_batch(const Matrix& X) {
 	return predictions;
 }
 
-inline void NeuralNetwork::save(const std::string& filename) const {
-	std::fstream file(filename, std::ios::out | std::ios::binary);
+void NeuralNetwork::save(const std::filesystem::path& filepath) const {
+	// Ensuring path existance
+	std::filesystem::create_directories(filepath.parent_path());
+
+	std::fstream file(filepath, std::ios::out | std::ios::binary);
 	if (!file.is_open()) {
-		throw std::runtime_error("Could not open file for saving: " + filename);
+		throw std::runtime_error("Could not open file for saving: " + filepath.string());
 	}
 
 	// Metadata: topology, activations, loss type, seed
@@ -401,16 +405,16 @@ inline void NeuralNetwork::save(const std::string& filename) const {
 		const size_t size = bias.size();
 
 		file.write(reinterpret_cast<const char*>(&size), sizeof(size_t));
-		file.write(reinterpret_cast<const char*>(&bias.data()), size * sizeof(double));
+		file.write(reinterpret_cast<const char*>(bias.data()), size * sizeof(double));
 	}
 	file.close();
-	std::println("Neural network saved to `{}`.", filename);
+	std::println("Neural network saved to `{}`.", filepath.string());
 }
 
-NeuralNetwork NeuralNetwork::load(const std::string& filename) {
-	std::fstream file(filename, std::ios::in | std::ios::binary);
+NeuralNetwork NeuralNetwork::load(const std::filesystem::path& filepath) {
+	std::fstream file(filepath, std::ios::in | std::ios::binary);
 	if (!file.is_open()) {
-		throw std::runtime_error("Could not open file for loading: " + filename);
+		throw std::runtime_error("Could not open file for loading: " + filepath.string());
 	}
 
 	// Load metadata
@@ -444,7 +448,7 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename) {
 	loaded_nn.m_biases.clear();
 
 	// Load weights
-	for (size_t i = 0; i < loaded_nn.m_N_LAYERS; ++i) {
+	for (size_t i = 0; i < loaded_nn.m_N_LAYERS; i++) {
 		size_t rows, cols;
 		file.read(reinterpret_cast<char*>(&rows), sizeof(size_t));
 		file.read(reinterpret_cast<char*>(&cols), sizeof(size_t));
@@ -454,7 +458,7 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename) {
 	}
 
 	// Load biases
-	for (size_t i = 0; i < loaded_nn.m_N_LAYERS; ++i) {
+	for (size_t i = 0; i < loaded_nn.m_N_LAYERS; i++) {
 		size_t size;
 		file.read(reinterpret_cast<char*>(&size), sizeof(size_t));
 		Vector vector(size);
@@ -463,6 +467,6 @@ NeuralNetwork NeuralNetwork::load(const std::string& filename) {
 	}
 
 	file.close();
-	std::println("Neural network loaded from `{}`", filename);
+	std::println("Neural network loaded from `{}`", filepath.string());
 	return loaded_nn;
 }

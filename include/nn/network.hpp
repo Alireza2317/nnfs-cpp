@@ -3,6 +3,7 @@
 #include "nn/loss.hpp"
 #include "nn/types.hpp"
 #include <Eigen/Dense>
+#include <filesystem>
 #include <span>
 #include <vector>
 
@@ -98,11 +99,11 @@ class NeuralNetwork {
 
 	/// @brief Saves the neural network's parameters to a file.
 	/// @param filename The path to the file where the network will be saved.
-	void save(const std::string& filename) const;
+	void save(const std::filesystem::path& filepath) const;
 
 	/// @brief Loads parameters from a file and constructs a NeuralNetwork object.
 	/// @param filename The path to the file from which the network will be loaded.
-	static NeuralNetwork load(const std::string& filename);
+	static NeuralNetwork load(const std::filesystem::path& filepath);
 
   private:
 	/// @brief Number of network layers (excluding input layer).
