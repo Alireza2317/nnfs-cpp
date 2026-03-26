@@ -4,6 +4,7 @@
 #include "nn/types.hpp"
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <numeric>
 #include <print>
 #include <random>
@@ -23,6 +24,19 @@ NeuralNetwork::NeuralNetwork(
 			"Neural network must have at least 3 layers (input, at least one hidden, and output).");
 	}
 
+	if (activations.size() != m_N_LAYERS) {
+		throw std::invalid_argument(
+			std::string("Number of activation functions must match the number of layers ") +
+			"(excluding the input layer). Expected: " + std::to_string(m_N_LAYERS) +
+			", but got: " + std::to_string(activations.size()));
+	}
+
+	if (loss == loss::LossType::CrossEntropy &&
+		activations.back() != activation::ActivationType::Softmax) {
+		throw std::logic_error(
+			"For Cross-Entropy loss, the output layer's activation must be Softmax.");
+	}
+
 	set_seed(seed);
 
 	calculate_weights_biases_shapes();
@@ -34,12 +48,6 @@ NeuralNetwork::NeuralNetwork(
 	setup_activations();
 
 	setup_loss();
-
-	if (m_loss_type == loss::LossType::CrossEntropy &&
-		m_activation_types.back() != activation::ActivationType::Softmax) {
-		throw std::logic_error(
-			"For Cross-Entropy loss, the output layer's activation must be Softmax.");
-	}
 }
 
 NeuralNetwork::NeuralNetwork(

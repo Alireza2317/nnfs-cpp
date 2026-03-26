@@ -139,7 +139,7 @@ class NeuralNetwork {
 	/// @brief Topology of the network (layer sizes).
 	std::vector<size_t> m_topology;
 
-	/// @brief Input layer activations.
+	/// @brief Input layer of the network.
 	Vector m_input_layer;
 
 	/// @brief Pre-activation values (z) for each layer.
