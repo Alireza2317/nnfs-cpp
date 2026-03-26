@@ -96,6 +96,14 @@ class NeuralNetwork {
 	/// @return Output data matrix of shape (output_dim, num_samples).
 	Matrix predict_batch(const Matrix& X);
 
+	/// @brief Saves the neural network's parameters to a file.
+	/// @param filename The path to the file where the network will be saved.
+	void save(const std::string& filename) const;
+
+	/// @brief Loads parameters from a file and constructs a NeuralNetwork object.
+	/// @param filename The path to the file from which the network will be loaded.
+	static NeuralNetwork load(const std::string& filename);
+
   private:
 	/// @brief Number of network layers (excluding input layer).
 	size_t m_N_LAYERS;
