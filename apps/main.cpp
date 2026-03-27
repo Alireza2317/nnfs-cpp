@@ -12,7 +12,9 @@
 #include <sstream>
 #include <stdexcept>
 
-Matrix load_csv(const char* path) {
+const std::filesystem::path ROOT_PATH = PROJECT_ROOT_PATH;
+
+Matrix load_csv(const std::filesystem::path& path) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
 		throw std::runtime_error("Could not open file: ");
@@ -54,6 +56,10 @@ Matrix load_csv(const char* path) {
 			try {
 				matrix(row, col) = std::stod(cell);
 			} catch (const std::invalid_argument& e) {
+				if (row == 0) {
+					// The file probably has a header row, so skip it continue reading the data.
+					continue;
+				}
 				std::println("Invalid value in cell!");
 				throw;
 			}
@@ -114,8 +120,11 @@ void print_confusion_matrix(const Matrix& confusion_matrix, const std::span<std:
 }
 
 void mnist() {
+	const std::filesystem::path& train_dataset_path = ROOT_PATH / "data" / "mnist_train.csv";
+	const std::filesystem::path& test_dataset_path = ROOT_PATH / "data" / "mnist_test.csv";
+
 	std::println("Loading MNIST train dataset...");
-	Matrix train_dataset = load_csv("../data/mnist_train_mini.csv");
+	Matrix train_dataset = load_csv(train_dataset_path);
 	std::println("-> Loaded dataset with {} samples.", train_dataset.rows());
 
 	// The dataset is currently of shape (num_samples, 1 + num_features)
@@ -135,8 +144,8 @@ void mnist() {
 	// Normalize the data
 	X_train /= 255.0;
 
-	size_t topology[] = {784, 16, 16, 10};
-	activation::ActivationType acts[] = {
+	const size_t topology[] = {784, 16, 16, 10};
+	const activation::ActivationType acts[] = {
 		activation::ActivationType::Relu,
 		activation::ActivationType::Relu,
 		activation::ActivationType::Softmax};
@@ -147,7 +156,7 @@ void mnist() {
 	std::println("---- Training Finished ----");
 
 	std::println("\nLoading MNIST test dataset...");
-	Matrix test_dataset = load_csv("../data/mnist_test.csv");
+	Matrix test_dataset = load_csv(test_dataset_path);
 	std::println("-> Loaded dataset with {} samples.", test_dataset.rows());
 
 	Matrix X_test = test_dataset.rightCols(test_dataset.cols() - 1).transpose();
@@ -158,9 +167,8 @@ void mnist() {
 	const double test_accuracy = nn.accuracy(X_test, y_test_labels) * 100.0;
 	std::println("\nTest Accuracy: {:.2f}%", test_accuracy);
 
-	const std::filesystem::path ROOT_PATH = PROJECT_ROOT_PATH;
-	const std::filesystem::path filepath = ROOT_PATH / "models" / "mnist_model.bin";
-	nn.save(filepath);
+	const std::filesystem::path model_filepath = ROOT_PATH / "models" / "mnist_model.bin";
+	nn.save(model_filepath);
 
 	std::array<std::string, 10> labels;
 	for (size_t i = 0; i < 10; i++) {
@@ -179,8 +187,8 @@ void xor_dataset() {
 	Matrix y(1, 4);
 	y << 0, 1, 1, 0;
 
-	size_t topology[] = {2, 4, 1};
-	activation::ActivationType acts[] = {
+	const size_t topology[] = {2, 4, 1};
+	const activation::ActivationType acts[] = {
 		activation::ActivationType::Relu,
 		activation::ActivationType::Sigmoid,
 	};
@@ -189,9 +197,8 @@ void xor_dataset() {
 
 	nn.train(X, y, 0.7, false, 0.001, 1000, 4);
 
-	const std::filesystem::path ROOT_PATH = PROJECT_ROOT_PATH;
-	const std::filesystem::path filepath = ROOT_PATH / "models" / "xor_model.bin";
-	nn.save(filepath);
+	const std::filesystem::path model_filepath = ROOT_PATH / "models" / "xor_model.bin";
+	nn.save(model_filepath);
 
 	std::println("Predictions:");
 	for (size_t i = 0; i < X.cols(); i++) {
@@ -201,7 +208,7 @@ void xor_dataset() {
 }
 
 int main() {
-	// mnist();
-	xor_dataset();
+	mnist();
+	// xor_dataset();
 	return 0;
 }

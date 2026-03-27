@@ -40,11 +40,12 @@
 # debug information files
 *.dwo
 
-
 # cmake
 .cache/
 build/
 
+# dataset files directory
 data/
 
+# saved binary model files
 models/
